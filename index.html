@@ -3,34 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>X3Engine | Autonomous Protocol</title>
+    <title>X3Engine | Full Autonomous Protocol</title>
     <style>
         :root { --glow-color: #00ff41; --bg-color: #050505; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg-color); color: var(--glow-color); font-family: 'Courier New', monospace; overflow: hidden; }
-        #matrixCanvas { position: fixed; top: 0; left: 0; z-index: -2; opacity: 0.1; }
-        .scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%); z-index: 10; background-size: 100% 2px; pointer-events: none; }
-        .terminal { position: relative; z-index: 5; width: 90%; max-width: 900px; height: 80vh; margin: 5vh auto; background: rgba(0, 0, 0, 0.9); border: 1px solid #111; padding: 30px; overflow-y: auto; scrollbar-width: none; }
+        
+        /* Background & Animation Layers */
+        #matrixCanvas { position: fixed; top: 0; left: 0; z-index: -2; opacity: 0.15; }
+        .scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%); z-index: 10; background-size: 100% 2px; pointer-events: none; }
+        .dna-pulse { position: fixed; bottom: 10px; right: 10px; font-size: 0.7rem; color: rgba(0, 255, 0, 0.2); animation: pulse 2s infinite; z-index: 11; }
+        @keyframes pulse { 0%, 100% { opacity: 0.1; } 50% { opacity: 0.5; } }
+
+        /* Terminal UI */
+        .terminal { position: relative; z-index: 5; width: 90%; max-width: 950px; height: 85vh; margin: 3vh auto; background: rgba(0, 0, 0, 0.85); border: 1px solid #111; padding: 25px; overflow-y: auto; scrollbar-width: none; box-shadow: 0 0 30px rgba(0,255,0,0.05); }
         .terminal::-webkit-scrollbar { display: none; }
-        .header { color: #444; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 20px; display: flex; justify-content: space-between; border-bottom: 1px solid #111; padding-bottom: 10px; }
+        .header { color: #444; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 15px; display: flex; justify-content: space-between; border-bottom: 1px solid #111; padding-bottom: 10px; }
+        
+        /* 21M Ticker Style */
+        .ticker-wrap { font-size: 1.4rem; margin: 15px 0; color: #fff; border-left: 3px solid var(--glow-color); padding-left: 15px; background: rgba(0,255,0,0.05); padding-top: 10px; padding-bottom: 10px; }
+        
         .line { margin-bottom: 8px; font-size: 1.1rem; line-height: 1.4; }
         .prompt { color: #fff; font-weight: bold; margin-right: 10px; }
-        .user-input-area { display: flex; align-items: center; width: 100%; }
+        .user-input-area { display: flex; align-items: center; width: 100%; margin-top: 10px; }
         #user-in { background: transparent; border: none; color: var(--glow-color); font-family: inherit; font-size: 1.1rem; outline: none; width: 100%; }
-        .cursor { display: inline-block; width: 10px; height: 20px; background: var(--glow-color); animation: blink 0.8s infinite; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-        .hex-reply { color: #fff; opacity: 0.7; font-size: 0.9rem; padding-left: 20px; }
+        .hex-reply { color: #888; font-size: 0.9rem; padding-left: 20px; font-style: italic; }
     </style>
 </head>
 <body>
     <canvas id="matrixCanvas"></canvas>
     <div class="scanlines"></div>
+    <div class="dna-pulse">DNA_KEY: 01001001011101000111001101001101010100100101100000110011</div>
 
     <div class="terminal" id="terminal">
         <div class="header">
-            <span>Kernel: X3_AUTO_V2</span>
-            <span>Signature: 0x4974734D525833</span>
+            <span>Kernel: X3_SUPREME_V3</span>
+            <span>Auth: 0x4974734D525833</span>
         </div>
+
+        <div class="ticker-wrap">
+            PROTOCOL_SUPPLY: <span id="ticker">0</span> / 21,000,000
+        </div>
+
         <div id="history"></div>
+
         <div class="user-input-area" id="input-line" style="display:none;">
             <span class="prompt">root@X3Engine:~$</span>
             <input type="text" id="user-in" autofocus autocomplete="off" spellcheck="false">
@@ -38,11 +53,11 @@
     </div>
 
     <script>
-        // Matrix Effect
+        // 1. Matrix Background Logic
         const canvas = document.getElementById('matrixCanvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-        const alphabet = "01"; const fontSize = 14; const columns = canvas.width / fontSize;
+        const alphabet = "01"; const fontSize = 16; const columns = canvas.width / fontSize;
         const rainDrops = Array.from({ length: columns }).fill(1);
         function drawMatrix() {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -56,16 +71,28 @@
         }
         setInterval(drawMatrix, 50);
 
-        // Terminal Logic
+        // 2. 21M Supply Ticker Logic
+        let count = 0;
+        const target = 21000000;
+        function updateTicker() {
+            if (count < target) {
+                count += Math.floor(Math.random() * 600000);
+                if (count > target) count = target;
+                document.getElementById('ticker').innerText = count.toLocaleString();
+                setTimeout(updateTicker, 40);
+            }
+        }
+
+        // 3. Interactive Terminal Logic
         const history = document.getElementById("history");
         const inputLine = document.getElementById("input-line");
         const userInput = document.getElementById("user-in");
 
         const initLines = [
-            "Booting X3Engine Protocol...",
-            "Decrypting 0x4974734D525833...",
-            "System: ONLINE [DAY 1]",
-            "Type something to encrypt..."
+            "Initializing X3Engine Master Core...",
+            "Loading DNA_KEY: 0x4974734D525833",
+            "Matrix Environment: [STABLE]",
+            "Type command or message to encrypt:"
         ];
 
         let lineIdx = 0;
@@ -76,31 +103,25 @@
                 p.innerHTML = `<span class="prompt">></span> ${initLines[lineIdx]}`;
                 history.appendChild(p);
                 lineIdx++;
-                setTimeout(typeInit, 600);
+                setTimeout(typeInit, 500);
             } else {
                 inputLine.style.display = "flex";
                 userInput.focus();
             }
         }
-        typeInit();
 
-        // Input Handling
         userInput.addEventListener("keydown", function(e) {
             if (e.key === "Enter") {
-                const val = this.value;
-                if (!val) return;
-
-                // Add User Command to History
+                const val = this.value; if (!val) return;
                 const userLine = document.createElement("div");
                 userLine.className = "line";
                 userLine.innerHTML = `<span class="prompt">root@X3Engine:~$</span> ${val}`;
                 history.appendChild(userLine);
 
-                // Process Response (Convert to HEX)
                 const hex = Array.from(val).map(c => c.charCodeAt(0).toString(16).toUpperCase()).join("");
                 const reply = document.createElement("div");
                 reply.className = "line hex-reply";
-                reply.innerHTML = `[ENC_REPLY]: 0x${hex} | Status: Synchronized`;
+                reply.innerHTML = `[RESULT]: 0x${hex} | Verified By Architect`;
                 history.appendChild(reply);
 
                 this.value = "";
@@ -108,7 +129,10 @@
             }
         });
 
-        // Refocus input on click
+        window.onload = () => {
+            updateTicker();
+            setTimeout(typeInit, 1000);
+        };
         document.addEventListener("click", () => userInput.focus());
     </script>
 </body>
